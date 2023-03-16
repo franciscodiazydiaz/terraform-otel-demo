@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# User Data to install ADOTCollector
+#
+set -e
+set -u
+set -o pipefail
+
+wget https://aws-otel-collector.s3.amazonaws.com/ubuntu/amd64/latest/aws-otel-collector.deb
+sudo dpkg -i -E ./aws-otel-collector.deb
+
+cat << EOF > /tmp/otel-config.yaml
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://*"
+            - "https://*"
+exporters:
+  logging:
+  file/traces:
+    path: /tmp/output-traces.json
+  file/metrics:
+    path: /tmp/output-metrics.json
+  file/logs:
+    path: /tmp/output-logs.json
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [file/traces]
+    metrics:
+      receivers: [otlp]
+      exporters: [file/metrics]
+    logs:
+      receivers: [otlp]
+      exporters: [logging, file/logs]
+  telemetry:
+    logs:
+      level: debug
+EOF

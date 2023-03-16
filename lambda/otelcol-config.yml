@@ -1,0 +1,30 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: localhost:4317
+      http:
+        endpoint: localhost:4318
+  telemetryapi:
+
+exporters:
+  otlphttp:
+    endpoint: "http://172.31.15.17:4318"
+    tls:
+      insecure: true
+  logging:
+
+service:
+  pipelines:
+    traces:
+      receivers: [telemetryapi, otlp]
+      exporters: [logging, otlphttp]
+    metrics:
+      receivers: [otlp]
+      exporters: [logging, otlphttp]
+    logs:
+      receivers: [telemetryapi, otlp]
+      exporters: [logging, otlphttp]
+  telemetry:
+    logs:
+      level: debug
